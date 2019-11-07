@@ -1,0 +1,15 @@
+---
+
+stages:
+  - Lint
+
+md_lint:
+  stage: Lint
+  image: pipelinecomponents/markdownlint:5d96213
+  script:
+    - mdl -a .
+  tags:
+    - styleconvention
+    - docker
+
+# TODO: add spellcheckers and agreement check
