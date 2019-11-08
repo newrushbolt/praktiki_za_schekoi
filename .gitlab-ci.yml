@@ -7,7 +7,7 @@ md_lint:
   stage: Lint
   image: pipelinecomponents/markdownlint:5d96213
   script:
-    - mdl -a .
+    - mdl -s md.rb -w .
   tags:
     - styleconvention
     - docker
