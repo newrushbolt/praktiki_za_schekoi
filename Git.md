@@ -135,7 +135,7 @@ bugfix/MGMT-81-fix-mistyped-salaries
     Убедитесь, что вы работаете над этой веткой один, иначе вы можете затереть коммиты ваших коллег.
 * `git push`  
     Он должен выдать ошибку о расхождении данных в локальном и удаленном репо.  
-* `git push --force`
+* `git push --force`  
     После проверяем в веб-версии, что все изменилось так, как мы и хотели  
 
 ### Найти правки в строках N1-N2 файле X
@@ -155,7 +155,7 @@ e0b9f53a (Sergei Mikhailov 2019-11-08 12:07:32 +0300 8)
 ```bash
 git show e0b9f53a README.md
 commit e0b9f53a7e461053f7bf099231bf6a35dfbc1c1b (HEAD -> feature/common-pain, origin/feature/common-pain)
-Author: Sergei Mikhailov <s.mikhaylov@rtk-dc.ru>
+Author: Sergei Mikhailov <s.mikhaylov@tgk-ws.ru>
 Date:   Fri Nov 8 12:07:32 2019 +0300
 
     Basic lint
@@ -205,3 +205,56 @@ git push
 ```
 
 ### Подтянуть себе правки из мастера и порешать конфликты
+
+В веб-интерфейсе видим, что смерджить бранч *create-wobbler-role* нельзя: есть конфликты.  
+Если до этого мы не делали merge-коммиты, то самым удобным будет сделать rebase.
+
+* Проверяем, что все правки добавлены в коммиты:  
+    `git status`
+
+* Бэкапим в отдельный бранч на всякий случай:  
+    `git branch my_backup_branch`
+
+* Делаем rebase:
+
+    ```bash
+    git rebase origin/master
+    First, rewinding head to replay your work on top of it...
+    Applying: Update README.md
+    Applying: check docker-compose
+    Applying: check docker-compose1
+    Applying: check docker-compose2
+    Applying: check docker-compose3
+    Applying: check docker-compose4
+    Using index info to reconstruct a base tree...
+    A       inventory/group_vars/t1000/all
+    Falling back to patching base and 3-way merge...
+    CONFLICT (modify/delete): inventory/group_vars/t1000/all deleted in HEAD and modified in check docker-compose4.
+                              Version check docker-compose4 of inventory/group_vars/t1000/all left in tree.
+    error: Failed to merge in the changes.
+    Patch failed at 0006 check docker-compose4
+    hint: Use 'git am --show-current-patch' to see the failed patch
+
+    Resolve all conflicts manually, mark them as resolved with
+    "git add/rm <conflicted_files>", then run "git rebase --continue".
+    You can instead skip this commit: run "git rebase --skip".
+    To abort and get back to the state before "git rebase", run "git rebase --abort".
+    ```
+
+* Теперь нужно решить конфликты. Следуем подсказкам git:
+
+    ```bash
+    git rm inventory/group_vars/t38/all
+    git rebase --continue
+    git rebase --skip
+    ```
+
+    _В данном случае нам не нужно мерджить конфликты в файле, мы его просто удаляем, как его уже удалили в мастере._
+
+* **Внимательно** проверяем ветку, на которой находимся:
+    это должна быть исходная ветка, и ни в коем случае **НЕ МАСТЕР**.  
+    Убедитесь, что вы работаете над этой веткой один, иначе вы можете затереть коммиты ваших коллег.
+* `git push`  
+    Он должен выдать ошибку о расхождении данных в локальном и удаленном репо.  
+* `git push --force`  
+    После проверяем в веб-версии, что все изменилось так, как мы и хотели  
