@@ -6,8 +6,8 @@
 
 > **Ansible** — система управления конфигурациями, написанная на Python, с использованием  
 декларативного языка разметки для описания конфигураций. Используется для автоматизации  
-настройки и развертывания программного обеспечения.
->>(c) Wikipedia
+настройки и развертывания программного обеспечения.  
+> (c) Wikipedia
 
 Главные отличия от Chef, Pupppet и прочих систем конфигурации:
 
@@ -74,16 +74,143 @@
 
 ## Практики
 
-хуяктики, расскажу, как не ссать на лицо самому себе и коллегам
+Ansible дает возможность выполнить один и те же задачи большим кол-вом способов,  
+поэтому ниже представлены препдочтительные способы решения тех или  иных задач.
 
 ### Именование
 
-именуй нормально, пидор
+Имена сущностей внутри проекта Ansible должны быть максиально очевидными.
 
 ### Переменные
 
-* объявляй все необходимые для роли переменные в корень_роли/defaults/main.yml
-* не используй корень_роли/vars/*
+#### Имя
+
+Имя переменной должны включать в себе имя роли, которая будет использовать эту переменную.  
+Вы или ваши коллеги не должны грепать роли в случае, если они обнаружили неизвестную им переменную в group\_vars или host\_vars.  
+Недопустимо:
+
+```yaml
+# roles/dns_slave/defaults/main.yml
+dns_zones: {}
+default_dns_resolver: 8.8.8.8
+```
+
+Допустимо:
+
+```yaml
+# roles/dns_slave/defaults/main.yml
+dns_slave_zones: {}
+dns_slave_default_resolver: 8.8.8.8
+```
+
+В случае, если вам нужна **глобальная переменная**,  
+которую будут **использовать несколько ролей** этой нужно явно отразить в имени переменной.  
+Кроме того, нужно явно указать использование этой переменной в defaults роли.
+
+Недопустимо:
+
+```yaml
+# group_vars/all.yml
+dns_slave_zones: {}
+
+# roles/dns_slave/templates/config.j2
+dns_zones = {{ dns_slave_zones }}
+
+# roles/exabgp/templates/config.j2
+dns_zones = {{ dns_slave_zones }}
+```
+
+Допустимо:
+
+```yaml
+# group_vars/all.yml
+global_dns_slave_zones: {}
+
+# roles/dns_slave/defaults/main.yml
+dns_slave_zones: "{{ global_dns_slave_zones }}"
+
+# roles/dns_slave/templates/config.j2
+dns_zones = {{ dns_slave_zones }}
+
+# roles/exabgp/defaults/main.yml
+exabgp_slave_zones: "{{ global_dns_slave_zones }}"
+
+# roles/exabgp/templates/config.j2
+dns_zones = {{ exabgp_slave_zones }}
+```
+
+#### Место
+
+Все переменные, которые будет использовать роль нужно объявлять в _корень\_роли/defaults/main.yml_ с дефольными\пустыми значениями.  
+Это позволяет не заглядывя в таски и шаблоны понять, какие переменные доступны в данной роли, и упрощает дальнейшую работу с group_vars.  
+Не рекомендуется задавать переменные в _корень\_роли/vars_,
+т. к. они [выбиваются](https://docs.ansible.com/ansible/latest/user_guide/playbooks_variables.html#id36) из последовательности работы с переменными.  
+
+#### Содержимое
+
+##### Line length
+
+Избегайте больших и\или нечитабельных конструкций внутри переменных.
+Если сократить размер не получается, то используйте многострочные конструкции с отступами.
+
+Неудачно:  
+
+```yaml
+dns_slave_custom_zones: "{{ ( my_custom_data|to_some_data_convertion|to_other_data_convertion).split(';')|sort|get_first_10 }}"
+```
+
+Допустимо:  
+
+```yaml
+dns_slave_custom_zones: >
+  {{
+    (
+      my_custom_data |
+      to_some_data_convertion |
+      to_other_data_convertion
+    ).split(';') |
+    sort |
+    get_first_10
+  }}
+```
+
+##### If
+
+Избегайте использования _if_.  
+В большинстве простых конструкций его легко можно заменить на _ternary_ или _default_.  
+
+Неудачно:
+
+```yaml
+raw_resources: "{%if 'resources' in pacemaker %}{{ pacemaker['resources'] }}{% endif %}"
+
+resources: "{%if 'resources' in pacemaker %}{{ pacemaker['resources'] | some_filtering }}{% endif %}"
+```
+
+Допустимо:  
+
+```yaml
+raw_resources: "{{ pacemaker['resources'] | default('') }}"
+
+resources: >
+  {{
+    ('resources' in pacemaker) |
+    ternary((pacemaker['resources'] | some_filtering), '')
+  }}
+```
+
+##### Python2
+
+Избегайте использования python-функций, которые существуют только в python2:
+
+* set
+* itemitems()
+
+##### Усы
+
+  Между "усами" и значениями внутри них должны быть пробелы.  
+  Плохо: `var: "{{key}}"`  
+  Нормально: `var: "{{ key }}"`  
 
 ### Таски
 
@@ -99,9 +226,6 @@
     Если твой плэйбук выполняется с become: true, а он должен выполнятся именно так, то явное указание root как владельца избыточно.  
     Аналогично с группой.  
 * усы и пробелы
-    Между "усами" и значениями внутри них должны быть пробелы.  
-    Плохо: `var: "{{key}}"`  
-    Нормально: `var: "{{ key }}"`  
 * `become: true`  
     Исподьзовать только в случае, когда действительно не нужно повышение привелегий.  
     По дефолту на уровне плэйбука ставить `become: true`, и по необходимости отключать в конкретных тасках.  
