@@ -10,7 +10,7 @@ txt_headers_lines = []
 
 for header in headers:
     header_level = (len(re.findall('#', header)) - 1) * '  '
-    header_text = header.replace("#", "")
+    header_text = re.sub('^#{2,10} ', '', header, re.MULTILINE)
     header_key = header_text.lower()
     header_key = header_key.replace('.', '-')
     header_key = header_key.replace('_', '-')
