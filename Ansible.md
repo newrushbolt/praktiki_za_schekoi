@@ -137,7 +137,7 @@ dns_slave_default_resolver: 8.8.8.8
 
 В случае, если вам нужна **глобальная переменная**,  
 которую будут **использовать несколько ролей** этой нужно явно отразить в имени переменной.  
-Кроме того, нужно явно указать использование этой переменной в defaults роли.
+Кроме того, нужно явно указать использование этой переменной в defaults роли, и добавить _default_ на случай отсутствия глобальной переменной.
 
 Недопустимо:
 
@@ -159,7 +159,7 @@ dns_zones = {{ dns_slave_zones }}
 global_dns_slave_zones: {}
 
 # roles/dns_slave/defaults/main.yml
-dns_slave_zones: "{{ global_dns_slave_zones }}"
+dns_slave_zones: "{{ global_dns_slave_zones | default({}) }}"
 
 # roles/dns_slave/templates/config.j2
 dns_zones = {{ dns_slave_zones }}
