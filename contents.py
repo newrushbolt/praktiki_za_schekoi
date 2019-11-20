@@ -9,7 +9,7 @@ headers = header_re.findall(src_md)
 txt_headers_lines = []
 
 for header in headers:
-    header_level = (len(re.findall('#', header)) - 1) * '  '
+    header_level = (len(re.findall('#', header)) - 2) * '    '
     header_text = re.sub('^#{2,10} ', '', header, re.MULTILINE)
     header_key = header_text.lower()
     header_key = header_key.replace('.', '-')
