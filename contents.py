@@ -12,7 +12,7 @@ for header in headers:
     header_level = (len(re.findall('#', header)) - 2) * '    '
     header_text = re.sub('^#{2,10} ', '', header, re.MULTILINE)
     header_key = header_text.lower()
-    header_key = header_key.replace('.', '-')
+    header_key = header_key.replace('.', '')
     header_key = header_key.replace('_', '-')
     header_key = header_key.replace(',', '-')
     header_key = header_key.replace(' ', '-')
