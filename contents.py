@@ -13,7 +13,6 @@ for header in headers:
     header_text = re.sub('^#{2,10} ', '', header, re.MULTILINE)
     header_key = header_text.lower()
     header_key = header_key.replace('.', '')
-    header_key = header_key.replace('_', '-')
     header_key = header_key.replace(',', '-')
     header_key = header_key.replace(' ', '-')
     header_line = "{}* [{}](#{})".format(header_level, header_text, header_key)

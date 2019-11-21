@@ -9,3 +9,7 @@
 ### markdownlint
 
 `docker run -it -v "$PWD:/code" pipelinecomponents/markdownlint:5d96213 mdl -s md.rb -w .`
+
+## Генерация заголовков
+
+`python contents.py < Ansible.md`
