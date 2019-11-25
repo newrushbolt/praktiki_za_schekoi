@@ -446,12 +446,65 @@ _shell_ и _command_ **НЕ** позволяют:
 
 * Имена хэндлеров должны быть уникальны, иначе из списка хэндлеров с одинаковыми именами выполниться только последний.
 * Поэтому для выполнения нескоольких хэндлеров, объединённых логически в один блок, нужно использовать _listen:_
+
+Не сработает:
+
+```yaml
+    # roles/front/handlers/main.yml
+    - name: restart front services
+      systemd:
+        name: front-app1
+        state: restarted
+
+    - name: restart front services
+      systemd:
+        name: front-app2
+        state: restarted
+
+    # roles/front/tasks/main.yml
+    - name: Change some configs
+      template:
+        src: front.conf.j2
+        dest: '/usrl/local/{{ item }}/front.conf.j2'
+      loop:
+        - 'front-app1'
+        - 'front-app2'
+      notify: "restart web services"
+```
+
+Cработает:
+
+```yaml
+    # roles/front/handlers/main.yml
+    - name: restart front-app1 service
+      systemd:
+        name: front-app1
+        state: restarted
+      listen: "restart web services"
+
+    - name: restart front-app2 service
+      systemd:
+        name: front-app2
+        state: restarted
+      listen: "restart web services"
+
+    # roles/front/tasks/main.yml
+    - name: Change some configs
+      template:
+        src: front.conf.j2
+        dest: '/usrl/local/{{ item }}/front.conf.j2'
+      loop:
+        - 'front-app1'
+        - 'front-app2'
+      notify: "restart web services"
+```
+
 * Хэндлеры выполняются в порядке объявления в `handlers/main.yml`, а не в порядке перечисления внутри _notify_:
 * Несмотря на то, что в именах хэндлеров могут быть переменные, использовать их не стоит. Мало того, что эти  
-  переменные шаблонизируются перед выполнением тасок и могут оказаться пустыми в этот момент, так они  
-  ещё и не изменят имя хэндлера при изменении переменной посреди выполнения тасок.
+    переменные шаблонизируются перед выполнением тасок и могут оказаться пустыми в этот момент, так они  
+    ещё и не изменят имя хэндлера при изменении переменной посреди выполнения тасок.
 * В глобальной конфигурации Ansible есть параметр, отвечающий за механизм обработки хэндлеров. Не стоит  
-  менять его с дефолтного значения, если только вы не невидите своих коллег.
+    менять его с дефолтного значения, если только вы не невидите своих коллег.
 * Если нужно выполнить хэндлеры раньше, чем закончится выполнение роли, используйте:
 
 ```yaml
