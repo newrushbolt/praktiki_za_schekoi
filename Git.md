@@ -244,7 +244,7 @@ git push
 * Теперь нужно решить конфликты. Следуем подсказкам git:
 
     ```bash
-    git rm inventory/group_vars/t38/all
+    git rm inventory/group_vars/t1000/all
     git rebase --continue
     git rebase --skip
     ```
