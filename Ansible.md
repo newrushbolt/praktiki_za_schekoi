@@ -469,7 +469,7 @@ _shell_ и _command_ **НЕ** позволяют:
       loop:
         - 'front-app1'
         - 'front-app2'
-      notify: "restart web services"
+      notify: "restart front services"
 ```
 
 Cработает:
@@ -480,13 +480,13 @@ Cработает:
       systemd:
         name: front-app1
         state: restarted
-      listen: "restart web services"
+      listen: "restart front services"
 
     - name: restart front-app2 service
       systemd:
         name: front-app2
         state: restarted
-      listen: "restart web services"
+      listen: "restart front services"
 
     # roles/front/tasks/main.yml
     - name: Change some configs
@@ -496,7 +496,7 @@ Cработает:
       loop:
         - 'front-app1'
         - 'front-app2'
-      notify: "restart web services"
+      notify: "restart front services"
 ```
 
 * Хэндлеры выполняются в порядке объявления в `handlers/main.yml`, а не в порядке перечисления внутри _notify_:
