@@ -428,10 +428,89 @@ _shell_ и _command_ **НЕ** позволяют:
 
 ### Хэндлеры
 
-* без шелла, если ты не мудак
-* юзай листен, если на разных системых нужно по-разному
-* `notify: Systemctl daemon reload`  
-    Не забывай при изменении конфигов systemd
+Хэндлеры -- крайне удобная вещь. Ими стоит пользоваться во всех ситуациях, когда действие нужно выполнить по  
+изменению в таске. Хэндлеры по своей сути не сильно отличаются от обычных тасок и к ним стоит те же самые  
+практики, не забывая при этом о специфике:
+
+* Не использовать _shell_ и _command_ без крайней необходимости.
+* Объявлять хэндлеры только в зарезервированном для них месте: `handlers/main.yml`
+* В случае перезапуска _systemd_ юнита не забывать о изменении конфига:
+
+    ```yaml
+        - name: restart vmevict service
+          systemd:
+            name: vmevict
+            state: restarted
+            daemon_reload: true
+    ```
+
+* Имена хэндлеров должны быть уникальны, иначе из списка хэндлеров с одинаковыми именами выполниться только последний.
+* Поэтому для выполнения нескоольких хэндлеров, объединённых логически в один блок, нужно использовать _listen:_
+
+  Не сработает:
+
+    ```yaml
+        # roles/front/handlers/main.yml
+        - name: restart front services
+          systemd:
+            name: front-app1
+            state: restarted
+
+        - name: restart front services
+          systemd:
+            name: front-app2
+            state: restarted
+
+        # roles/front/tasks/main.yml
+        - name: Change some configs
+          template:
+            src: front.conf.j2
+            dest: '/usrl/local/{{ item }}/front.conf.j2'
+          loop:
+            - 'front-app1'
+            - 'front-app2'
+          notify: "restart front services"
+    ```
+
+  Cработает:
+
+    ```yaml
+        # roles/front/handlers/main.yml
+        - name: restart front-app1 service
+          systemd:
+            name: front-app1
+            state: restarted
+          listen: "restart front services"
+
+        - name: restart front-app2 service
+          systemd:
+            name: front-app2
+            state: restarted
+          listen: "restart front services"
+
+        # roles/front/tasks/main.yml
+        - name: Change some configs
+          template:
+            src: front.conf.j2
+            dest: '/usrl/local/{{ item }}/front.conf.j2'
+          loop:
+            - 'front-app1'
+            - 'front-app2'
+          notify: "restart front services"
+    ```
+
+* Хэндлеры выполняются в порядке объявления в `handlers/main.yml`, а не в порядке перечисления внутри _notify_:
+* Несмотря на то, что в именах хэндлеров могут быть переменные, использовать их не стоит. Мало того, что эти  
+    переменные шаблонизируются перед выполнением тасок и могут оказаться пустыми в этот момент, так они  
+    ещё и не изменят имя хэндлера при изменении переменной посреди выполнения тасок.
+* В глобальной конфигурации Ansible есть параметр, отвечающий за механизм обработки хэндлеров. Не стоит  
+    менять его с дефолтного значения, если только вы не невидите своих коллег.
+* Если нужно выполнить хэндлеры раньше, чем они сработают по умолчанию:
+
+```yaml
+    - name: Run handlers immediatly
+      meta: flush_handlers
+```
 
 ### Шаблоны и файлы
 
