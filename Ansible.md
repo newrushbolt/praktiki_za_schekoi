@@ -725,8 +725,6 @@ _shell_ и _command_ **НЕ** позволяют:
 
 #### Минимальный чеклист для роли
 
-Быстро проверить то, что роль минимально удовлетворяет требованиями, можно вот так:
-
 ```bash
   # Check-mode и изоляция роли
   ansible-playbook -i inventory.yml -l host_subset site.yml --check
