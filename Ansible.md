@@ -11,6 +11,7 @@
     * [Имя переменной](#имя-переменной)  
     * [Глобальные переменные](#глобальные-переменные)  
     * [Место объявления переменной](#место-объявления-переменной)  
+    * [Управление и переопределение defaults-переменных](#управление-и-переопределение-defaults-переменных)  
     * [Форматирование определения](#форматирование-определения)  
     * [If в переменных](#if-в-переменных)  
     * [Python2 в теле переменных](#python2-в-теле-переменных)  
@@ -261,6 +262,39 @@ dns_zones = {{ exabgp_slave_zones }}
 Это позволяет не заглядывая в таски и шаблоны понять, какие переменные доступны в данной роли, и упрощает дальнейшую работу с group_vars.  
 Не рекомендуется задавать переменные в _корень\_роли/vars_, т.к. они  
 [выбиваются](https://docs.ansible.com/ansible/latest/user_guide/playbooks_variables.html#id36) из последовательности работы с переменными.  
+
+#### Управление и переопределение defaults-переменных
+
+Если возможно изменение вне словаря значений, их надо делать легко доступными и не требующие переопределения/дублирования всего dictionary.
+Переменные в _корень\_роли/defaults/main.yml_ надо определять так, чтобы их можно было переопределить в других местах host_vars, group_vars.
+Неудачно:  
+
+```yaml
+libvirt:
+    imgdir: "/var/lib/libvirt/images"
+    imgurl: "http://ya.ru"
+    execvc: "/bin/virt-customize"
+    execqm: "/usr/bin/qemu-img"
+```
+
+Допустимо:  
+
+```yaml
+libvirt_imgdir: "/var/lib/libvirt/images"
+libvirt_imgurl: "http://ya.ru"
+libvirt_execvc: "/bin/virt-customize"
+libvirt_execqm: "/usr/bin/qemu-img"
+```
+
+Допустимо:  
+
+```yaml
+libvirt:
+    imgdir: "{{ libvirt_imgdir }}"
+    imgurl: "{{ libvirt_imgurl }}"
+    execvc: "{{ libvirt_execvc }}"
+    execqm: "{{ libvirt_execqm }}"
+```
 
 #### Форматирование определения
 
