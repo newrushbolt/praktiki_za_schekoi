@@ -11,6 +11,7 @@
     * [Имя переменной](#имя-переменной)  
     * [Глобальные переменные](#глобальные-переменные)  
     * [Место объявления переменной](#место-объявления-переменной)  
+    * [Использование словарей в переменных](#использование-словарей-в-переменных)  
     * [Форматирование определения](#форматирование-определения)  
     * [If в переменных](#if-в-переменных)  
     * [Python2 в теле переменных](#python2-в-теле-переменных)  
@@ -261,6 +262,48 @@ dns_zones = {{ exabgp_slave_zones }}
 Это позволяет не заглядывая в таски и шаблоны понять, какие переменные доступны в данной роли, и упрощает дальнейшую работу с group_vars.  
 Не рекомендуется задавать переменные в _корень\_роли/vars_, т.к. они  
 [выбиваются](https://docs.ansible.com/ansible/latest/user_guide/playbooks_variables.html#id36) из последовательности работы с переменными.  
+
+#### Использование словарей в переменных
+
+Крайне желательно избегать использования словарей в переменных, т. к. это сильно ограничивает  
+возможность переопределения только необходимых параметров в host_vars/group_vars.  
+
+Неудачно:  
+
+```yaml
+# roles/libvirt/defaults/main.yml
+
+libvirt:
+  imgdir: "/var/lib/libvirt/images"
+  imgurl: "http://ya.ru"
+  execvc: "/bin/virt-customize"
+  execqm: "/usr/bin/qemu-img"
+```
+
+Допустимо:  
+
+```yaml
+# roles/libvirt/defaults/main.yml
+
+libvirt_imgdir: "/var/lib/libvirt/images"
+libvirt_imgurl: "http://ya.ru"
+libvirt_execvc: "/bin/virt-customize"
+libvirt_execqm: "/usr/bin/qemu-img"
+```
+
+Допустимо использование словарей в случае, когда нужно целиком передать словарь в какую-то сущность.  
+В этом случае можно делать шаблонизацию вот так:  
+
+```yaml
+# roles/libvirt/defaults/main.yml
+
+libvirt_imgdir: "/var/lib/libvirt/images"
+libvirt_config_struct:
+  imgdir: "{{ libvirt_imgdir }}"
+  imgurl: "http://ya.ru"
+  execvc: "/bin/virt-customize"
+  execqm: "/usr/bin/qemu-img"
+```
 
 #### Форматирование определения
 
